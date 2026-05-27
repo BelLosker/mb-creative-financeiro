@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MB Creative — Controle Financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13151c;
+    --bg3: #1a1d27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8b8fa8;
+    --text3: #555970;
+    --gold: #c9a84c;
+    --gold2: #f0c96b;
+    --gold-bg: rgba(201,168,76,0.08);
+    --gold-border: rgba(201,168,76,0.2);
+    --green: #4caf8a;
+    --green-bg: rgba(76,175,138,0.1);
+    --red: #e05a5a;
+    --red-bg: rgba(224,90,90,0.1);
+    --blue: #5a9ee0;
+    --blue-bg: rgba(90,158,224,0.1);
+    --purple: #9b72e0;
+    --purple-bg: rgba(155,114,224,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Playfair Display', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; display: flex; flex-direction: column; }
+  .main { margin-left: 220px; flex: 1; padding: 28px 32px; max-width: 1280px; }
+
+  /* Sidebar */
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-family: var(--font-display); font-size: 20px; color: var(--gold2); }
+  .logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .nav { padding: 16px 0; flex: 1; }
+  .nav-label { padding: 8px 20px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: var(--text2); cursor: pointer; transition: all 0.15s; font-size: 13.5px; border-left: 2px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--gold2); background: var(--gold-bg); border-left-color: var(--gold); }
+  .nav-item i { font-size: 17px; }
+
+  /* Dolar bar */
+  .dolar-bar { padding: 16px 20px; border-top: 1px solid var(--border); margin-top: auto; }
+  .dolar-label { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .dolar-value { font-family: var(--font-mono); font-size: 20px; color: var(--gold2); font-weight: 500; margin-top: 4px; }
+  .dolar-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 12px; color: var(--text); font-family: var(--font-mono); font-size: 14px; margin-top: 8px; }
+  .dolar-input:focus { outline: none; border-color: var(--gold-border); }
+  .dolar-status { font-size: 10px; margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+  .dolar-status.loading { color: var(--text3); }
+  .dolar-status.ok { color: var(--green); }
+  .dolar-status.err { color: var(--red); }
+  .dolar-status.manual { color: var(--gold); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { display: inline-block; animation: spin 1s linear infinite; }
+
+  /* Views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Header */
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-size: 24px; font-weight: 600; color: var(--text); }
+  .page-sub { color: var(--text2); font-size: 14px; margin-top: 4px; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card-sm { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+
+  /* Metric */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .metric.highlight { border-color: var(--gold-border); background: var(--gold-bg); }
+  .metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 8px; }
+  .metric-value { font-family: var(--font-mono); font-size: 26px; font-weight: 500; color: var(--text); }
+  .metric-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .metric.highlight .metric-value { color: var(--gold2); }
+  .metric-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; margin-top: 6px; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-gold { background: var(--gold-bg); color: var(--gold2); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 500; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-sm); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--gold); color: #0d0f14; }
+  .btn-primary:hover { background: var(--gold2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(224,90,90,0.2); }
+  .btn-danger:hover { background: rgba(224,90,90,0.2); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-control { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text); font-family: var(--font); font-size: 13.5px; }
+  .form-control:focus { outline: none; border-color: var(--gold-border); }
+  select.form-control option { background: var(--bg3); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 28px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .modal-title { font-size: 17px; font-weight: 600; color: var(--text); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  /* Section headers */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  /* Freq badge */
+  .freq { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .freq-semanal { background: rgba(90,158,224,0.15); color: var(--blue); }
+  .freq-quinzenal { background: rgba(155,114,224,0.15); color: var(--purple); }
+  .freq-mensal { background: var(--green-bg); color: var(--green); }
+  .freq-trimestral { background: var(--gold-bg); color: var(--gold2); }
+
+  /* Status dot */
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+  .dot-gold { background: var(--gold); }
+
+  /* Grid 2col */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  /* Distribuição */
+  .socio-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .socio-avatar { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+  .socio-name { font-size: 17px; font-weight: 600; }
+  .socio-pct { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .socio-value { font-family: var(--font-mono); font-size: 28px; font-weight: 500; color: var(--gold2); margin-top: 16px; }
+  .socio-value-usd { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+  /* Chart container */
+  .chart-container { position: relative; height: 260px; width: 100%; }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; }
+    .sidebar .logo-name, .sidebar .logo-sub, .sidebar .nav-label, .nav-item span, .dolar-bar { display: none; }
+    .main { margin-left: 60px; padding: 20px 16px; }
+    .grid-2, .form-row { grid-template-columns: 1fr; }
+  }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; }
+
+  .total-row td { font-weight: 600; color: var(--gold2); background: var(--gold-bg) !important; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+  .chip-close { cursor: pointer; opacity: 0.6; }
+  /* Login */
+  .login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9998; display: flex; align-items: center; justify-content: center; }
+  .login-box { width: 380px; text-align: center; }
+  .login-logo { font-family: var(--font-display); font-size: 36px; color: var(--gold2); margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 40px; letter-spacing: 1px; text-transform: uppercase; }
+  .login-label { display: block; text-align: left; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .login-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 14px 16px; color: var(--text); font-family: var(--font); font-size: 15px; text-align: center; letter-spacing: 3px; margin-bottom: 16px; }
+  .login-input:focus { outline: none; border-color: var(--gold-border); }
+  .login-btn { width: 100%; padding: 14px; background: var(--gold); color: #0d0f14; border: none; border-radius: var(--radius-sm); font-family: var(--font); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .login-btn:hover { background: var(--gold2); }
+  .login-err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 20px; }
+  .login-hint { font-size: 11px; color: var(--text3); margin-top: 24px; }
+  .login-users { display: flex; justify-content: center; gap: 16px; margin-bottom: 32px; }
+  .login-user { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .login-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .login-avatar:hover { transform: scale(1.05); }
+  .login-avatar.selected { border-color: var(--gold); }
+  .login-uname { font-size: 12px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">MB Creative</div>
+    <div class="login-sub">Controle Financeiro</div>
+
+    <div class="login-users">
+      <div class="login-user" onclick="selectUser('murillo')">
+        <div class="login-avatar" id="av-murillo" style="background:rgba(201,168,76,0.15);color:var(--gold2)">M</div>
+        <div class="login-uname">Murillo</div>
+      </div>
+      <div class="login-user" onclick="selectUser('leonardo')">
+        <div class="login-avatar" id="av-leonardo" style="background:rgba(90,158,224,0.15);color:var(--blue)">L</div>
+        <div class="login-uname">Leonardo</div>
+      </div>
+      <div class="login-user" onclick="selectUser('socio')">
+        <div class="login-avatar" id="av-socio" style="background:rgba(76,175,138,0.15);color:var(--green)">S</div>
+        <div class="login-uname">Sócio</div>
+      </div>
+    </div>
+
+    <label class="login-label">Senha de acesso</label>
+    <input type="password" class="login-input" id="login-senha" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-hint">Acesso restrito aos sócios da MB Creative</div>
+  </div>
+</div>
+<div class="app">
+<div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-family:var(--font-display);font-size:28px;color:var(--gold2)">MB Creative</div>
+  <div style="color:var(--text3);font-size:14px">Carregando dados da nuvem...</div>
+  <div style="width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">MB Creative</div>
+    <div class="logo-sub">Financeiro</div>
+    <div id="sync-status" style="font-size:11px; margin-top:8px; color:var(--text3)">⏳ Carregando...</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Visão Geral</div>
+    <div class="nav-item active" onclick="showView('dashboard')">
+      <i class="ti ti-layout-dashboard"></i><span>Dashboard</span>
+    </div>
+    <div class="nav-label">Gestão</div>
+    <div class="nav-item" onclick="showView('clientes')">
+      <i class="ti ti-users"></i><span>Clientes</span>
+    </div>
+    <div class="nav-item" onclick="showView('folha')">
+      <i class="ti ti-id-badge"></i><span>Folha de Pagto</span>
+    </div>
+    <div class="nav-item" onclick="showView('despesas')">
+      <i class="ti ti-receipt"></i><span>Despesas</span>
+    </div>
+    <div class="nav-label">Resultado</div>
+    <div class="nav-item" onclick="showView('distribuicao')">
+      <i class="ti ti-chart-pie"></i><span>Distribuição</span>
+    </div>
+    <div style="margin-top: auto; padding-top: 16px;">
+      <div class="nav-item" id="nav-usuario" style="pointer-events:none;">
+        <i class="ti ti-user-circle"></i><span id="nav-username">—</span>
+      </div>
+      <div class="nav-item" onclick="doLogout()" style="color:var(--red)">
+        <i class="ti ti-logout"></i><span>Sair</span>
+      </div>
+    </div>
+  </nav>
+  <div class="dolar-bar">
+    <div class="dolar-label">USD → BRL</div>
+    <div class="dolar-value" id="dolar-display">R$ —</div>
+    <div class="dolar-status loading" id="dolar-status">
+      <i class="ti ti-refresh spinning"></i> Buscando cotação...
+    </div>
+    <input type="number" class="dolar-input" id="dolar-rate" value="" step="0.01" min="1"
+      oninput="updateDolarManual(this.value)" placeholder="Ou insira manualmente">
+  </div>
+</aside>
+
+<!-- Main content -->
+<main class="main">
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="view active" id="view-dashboard">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-date"></div>
+    </div>
+
+    <div class="metrics-grid" id="dash-metrics"></div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="section-header">
+          <div><div class="section-title">Receita Mensal Projetada</div><div class="section-sub">Por frequência de pagamento</div></div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartReceita" role="img" aria-label="Receita por cliente"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div><div class="section-title">Composição de Custos</div><div class="section-sub">Folha + Despesas</div></div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartCustos" role="img" aria-label="Composição de custos"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div><div class="section-title">Clientes Ativos</div><div class="section-sub">Resumo de entradas</div></div>
+        <button class="btn btn-primary btn-sm" onclick="showView('clientes')"><i class="ti ti-plus"></i> Gerenciar</button>
+      </div>
+      <div id="dash-clientes-table"></div>
+    </div>
+  </div>
+
+  <!-- ============ CLIENTES ============ -->
+  <div class="view" id="view-clientes">
+    <div class="page-header">
+      <div class="page-title">Clientes</div>
+      <div class="page-sub">Entradas e frequência de pagamento</div>
+    </div>
+
+    <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr);" id="clientes-metrics"></div>
+
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Lista de Clientes</div>
+        <button class="btn btn-primary" onclick="openModal('modal-cliente')">
+          <i class="ti ti-plus"></i> Novo Cliente
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Valor (USD)</th>
+              <th>Valor (R$)</th>
+              <th>Frequência</th>
+              <th>Mensal equiv.</th>
+              <th>Próx. pgto</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clientes-tbody"></tbody>
+          <tfoot id="clientes-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOLHA ============ -->
+  <div class="view" id="view-folha">
+    <div class="page-header">
+      <div class="page-title">Folha de Pagamento</div>
+      <div class="page-sub">Colaboradores e salários em Real</div>
+    </div>
+    <div class="metrics-grid" style="grid-template-columns: repeat(3,1fr);" id="folha-metrics"></div>
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Colaboradores</div>
+        <button class="btn btn-primary" onclick="openModal('modal-funcionario')">
+          <i class="ti ti-plus"></i> Novo Colaborador
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Cargo</th>
+              <th>Salário (R$)</th>
+              <th>Encargos (R$)</th>
+              <th>Total (R$)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="folha-tbody"></tbody>
+          <tfoot id="folha-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DESPESAS ============ -->
+  <div class="view" id="view-despesas">
+    <div class="page-header">
+      <div class="page-title">Despesas Gerais</div>
+      <div class="page-sub">Assinaturas e custos fixos em Dólar</div>
+    </div>
+    <div class="metrics-grid" style="grid-template-columns: repeat(3,1fr);" id="despesas-metrics"></div>
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Lista de Despesas</div>
+        <button class="btn btn-primary" onclick="openModal('modal-despesa')">
+          <i class="ti ti-plus"></i> Nova Despesa
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Valor (USD)</th>
+              <th>Valor (R$)</th>
+              <th>Periodicidade</th>
+              <th>Mensal equiv.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="despesas-tbody"></tbody>
+          <tfoot id="despesas-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DISTRIBUIÇÃO ============ -->
+  <div class="view" id="view-distribuicao">
+    <div class="page-header">
+      <div class="page-title">Distribuição de Lucro</div>
+      <div class="page-sub">Rateio 50/50 entre sócios</div>
+    </div>
+
+    <div class="metrics-grid" style="grid-template-columns: repeat(4,1fr);" id="dist-metrics"></div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="socio-card">
+        <div class="socio-avatar" style="background: rgba(201,168,76,0.15); color: var(--gold2);">M</div>
+        <div class="socio-name">Murillo</div>
+        <div class="socio-pct">50% do lucro líquido</div>
+        <div class="socio-value" id="murillo-value">R$ 0,00</div>
+        <div class="socio-value-usd" id="murillo-usd">USD 0,00</div>
+      </div>
+      <div class="socio-card">
+        <div class="socio-avatar" style="background: rgba(90,158,224,0.15); color: var(--blue);">L</div>
+        <div class="socio-name">Leonardo</div>
+        <div class="socio-pct">50% do lucro líquido</div>
+        <div class="socio-value" id="leonardo-value">R$ 0,00</div>
+        <div class="socio-value-usd" id="leonardo-usd">USD 0,00</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:20px;">Demonstrativo de Resultado</div>
+      <div id="dre-table"></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ============ MODAIS ============ -->
+
+<!-- Modal Cliente -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cliente-title">Novo Cliente</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-cliente')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-cliente-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nome do Cliente *</label>
+        <input type="text" class="form-control" id="cliente-nome" placeholder="Ex: Empresa XYZ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor em Dólar (USD) *</label>
+        <input type="number" class="form-control" id="cliente-valor" placeholder="Ex: 500" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Frequência de Pagamento</label>
+        <select class="form-control" id="cliente-freq">
+          <option value="mensal">Mensal</option>
+          <option value="semanal">Semanal</option>
+          <option value="quinzenal">Quinzenal</option>
+          <option value="trimestral">Trimestral</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de Pagamento</label>
+        <input type="date" class="form-control" id="cliente-data">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-control" id="cliente-status">
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCliente()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Funcionário -->
+<div class="modal-overlay" id="modal-funcionario">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-func-title">Novo Colaborador</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-funcionario')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-func-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input type="text" class="form-control" id="func-nome" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cargo</label>
+        <input type="text" class="form-control" id="func-cargo" placeholder="Ex: Designer">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Salário Bruto (R$) *</label>
+        <input type="number" class="form-control" id="func-salario" placeholder="Ex: 3500" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Encargos % (INSS, FGTS etc.)</label>
+        <input type="number" class="form-control" id="func-encargos" value="30" min="0" max="100" step="0.1" placeholder="Ex: 30">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-funcionario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFuncionario()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Despesa -->
+<div class="modal-overlay" id="modal-despesa">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-desp-title">Nova Despesa</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-despesa')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-desp-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Descrição *</label>
+        <input type="text" class="form-control" id="desp-nome" placeholder="Ex: Adobe CC">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-control" id="desp-categoria">
+          <option value="software">Software / SaaS</option>
+          <option value="infraestrutura">Infraestrutura</option>
+          <option value="marketing">Marketing</option>
+          <option value="operacional">Operacional</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Valor (USD) *</label>
+        <input type="number" class="form-control" id="desp-valor" placeholder="Ex: 55.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Periodicidade</label>
+        <select class="form-control" id="desp-periodo">
+          <option value="mensal">Mensal</option>
+          <option value="anual">Anual</option>
+          <option value="trimestral">Trimestral</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-despesa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDespesa()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ LOGIN ============
+// Senhas por usuário — altere aqui para personalizar
+const USUARIOS = {
+  murillo:  { senha: 'mb2024murillo',  nome: 'Murillo' },
+  leonardo: { senha: 'mb2024leonardo', nome: 'Leonardo' },
+  socio:    { senha: 'mbcreative2024', nome: 'Sócio' }
+};
+
+let usuarioAtual = null;
+let usuarioSelecionado = null;
+
+function selectUser(u) {
+  usuarioSelecionado = u;
+  document.querySelectorAll('.login-avatar').forEach(a => a.classList.remove('selected'));
+  document.getElementById('av-' + u).classList.add('selected');
+  document.getElementById('login-senha').focus();
+}
+
+function doLogin() {
+  const senha = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-err');
+
+  if (!usuarioSelecionado) {
+    errEl.textContent = 'Selecione seu nome acima.';
+    return;
+  }
+  if (!senha) {
+    errEl.textContent = 'Digite a senha.';
+    return;
+  }
+
+  const user = USUARIOS[usuarioSelecionado];
+  if (senha === user.senha) {
+    usuarioAtual = usuarioSelecionado;
+    sessionStorage.setItem('mb-user', usuarioSelecionado);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('nav-username').textContent = user.nome;
+    errEl.textContent = '';
+    loadState();
+  } else {
+    errEl.textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+    // Shake animation
+    const input = document.getElementById('login-senha');
+    input.style.borderColor = 'var(--red)';
+    setTimeout(() => input.style.borderColor = '', 1500);
+  }
+}
+
+function doLogout() {
+  if (!confirm('Deseja sair do sistema?')) return;
+  sessionStorage.removeItem('mb-user');
+  usuarioAtual = null;
+  usuarioSelecionado = null;
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-err').textContent = '';
+  document.querySelectorAll('.login-avatar').forEach(a => a.classList.remove('selected'));
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function checkSession() {
+  const saved = sessionStorage.getItem('mb-user');
+  if (saved && USUARIOS[saved]) {
+    usuarioAtual = saved;
+    usuarioSelecionado = saved;
+    document.getElementById('av-' + saved)?.classList.add('selected');
+    document.getElementById('nav-username').textContent = USUARIOS[saved].nome;
+    document.getElementById('login-screen').style.display = 'none';
+    return true;
+  }
+  return false;
+}
+
+
+const SUPA_URL = 'https://sdethhIodybgnifrqcpb.supabase.co';
+const SUPA_KEY = 'sb_publishable_oDdSI6VvNAIrRjfOIlLvxA_FxxziwHh';
+const SUPA_ROW_ID = 1;
+
+async function supaGet() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/DADOS?id=eq.${SUPA_ROW_ID}&select=valor`, {
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    });
+    const rows = await res.json();
+    if (rows && rows.length > 0 && rows[0].valor) {
+      return JSON.parse(rows[0].valor);
+    }
+  } catch(e) { console.warn('Supabase GET error:', e); }
+  return null;
+}
+
+async function supaSet(data) {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/DADOS?id=eq.${SUPA_ROW_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ valor: JSON.stringify(data) })
+    });
+  } catch(e) { console.warn('Supabase PATCH error:', e); }
+}
+
+async function supaInit(data) {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/DADOS`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ id: SUPA_ROW_ID, valor: JSON.stringify(data) })
+    });
+  } catch(e) { console.warn('Supabase POST error:', e); }
+}
+
+// ============ STATE ============
+const DEFAULT_STATE = {
+  dolar: 5.80,
+  clientes: [],
+  funcionarios: [],
+  despesas: []
+};
+
+let state = { ...DEFAULT_STATE };
+let nextId = { clientes: 100, funcionarios: 100, despesas: 100 };
+let syncStatus = 'loading'; // loading | ok | err
+
+function showSyncStatus(status, msg) {
+  syncStatus = status;
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const icons = { loading: '⏳', ok: '☁️', err: '⚠️' };
+  const colors = { loading: 'var(--text3)', ok: 'var(--green)', err: 'var(--gold2)' };
+  el.textContent = icons[status] + ' ' + msg;
+  el.style.color = colors[status];
+}
+
+async function saveState() {
+  localStorage.setItem('mb-creative-state', JSON.stringify(state));
+  showSyncStatus('loading', 'Salvando...');
+  await supaSet(state);
+  showSyncStatus('ok', 'Sincronizado');
+}
+
+async function loadState() {
+  showSyncStatus('loading', 'Carregando dados...');
+  const remote = await supaGet();
+  if (remote) {
+    state = remote;
+    showSyncStatus('ok', 'Dados carregados');
+  } else {
+    // Primeira vez — tenta criar a linha no banco
+    const local = JSON.parse(localStorage.getItem('mb-creative-state') || 'null');
+    state = local || { ...DEFAULT_STATE };
+    await supaInit(state);
+    showSyncStatus('ok', 'Banco inicializado');
+  }
+  // Recalcula nextId para evitar colisões
+  if (state.clientes?.length) nextId.clientes = Math.max(...state.clientes.map(x=>x.id), 100) + 1;
+  if (state.funcionarios?.length) nextId.funcionarios = Math.max(...state.funcionarios.map(x=>x.id), 100) + 1;
+  if (state.despesas?.length) nextId.despesas = Math.max(...state.despesas.map(x=>x.id), 100) + 1;
+  renderAll();
+  scheduleDolarRefresh();
+  const ov = document.getElementById('loading-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+// Polling a cada 30s para captar mudanças de outros usuários
+setInterval(async () => {
+  const remote = await supaGet();
+  if (remote) {
+    state = remote;
+    showSyncStatus('ok', 'Atualizado agora');
+    renderAll();
+  }
+}, 30000);
+
+// ============ HELPERS ============
+const fmt = (v, decimals=2) => v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+const fmtBRL = (v) => 'R$ ' + fmt(v);
+const fmtUSD = (v) => 'USD ' + fmt(v);
+
+function freqMultiplier(freq) {
+  if (freq === 'semanal') return 4.33;
+  if (freq === 'quinzenal') return 2;
+  if (freq === 'mensal') return 1;
+  if (freq === 'trimestral') return 1/3;
+  if (freq === 'anual') return 1/12;
+  return 1;
+}
+
+function freqLabel(freq) {
+  const map = { semanal:'Semanal', quinzenal:'Quinzenal', mensal:'Mensal', trimestral:'Trimestral', anual:'Anual' };
+  return map[freq] || freq;
+}
+
+function freqClass(freq) {
+  const map = { semanal:'freq-semanal', quinzenal:'freq-quinzenal', mensal:'freq-mensal', trimestral:'freq-trimestral', anual:'freq-trimestral' };
+  return map[freq] || '';
+}
+
+function catLabel(c) {
+  const m = { software:'Software', infraestrutura:'Infra', marketing:'Marketing', operacional:'Operacional', outros:'Outros' };
+  return m[c] || c;
+}
+
+// ============ CALCULATIONS ============
+function calcFaturamentoMensal() {
+  return state.clientes
+    .filter(c => c.status === 'ativo')
+    .reduce((s, c) => s + (c.valor * freqMultiplier(c.freq) * state.dolar), 0);
+}
+
+function calcFolhaMensal() {
+  return state.funcionarios.reduce((s, f) => s + (f.salario * (1 + f.encargos / 100)), 0);
+}
+
+function calcDespesasMensal() {
+  return state.despesas.reduce((s, d) => s + (d.valor * freqMultiplier(d.periodo) * state.dolar), 0);
+}
+
+function calcLucroLiquido() {
+  return calcFaturamentoMensal() - calcFolhaMensal() - calcDespesasMensal();
+}
+
+// ============ NAVIGATION ============
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
+  });
+  renderAll();
+}
+
+// ============ MODALS ============
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modal-cliente') { document.getElementById('edit-cliente-id').value = ''; clearClienteForm(); }
+  if (id === 'modal-funcionario') { document.getElementById('edit-func-id').value = ''; clearFuncForm(); }
+  if (id === 'modal-despesa') { document.getElementById('edit-desp-id').value = ''; clearDespForm(); }
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+// ============ DOLAR ============
+function updateDolar(v, source) {
+  state.dolar = parseFloat(v) || 5.80;
+  document.getElementById('dolar-display').textContent = fmtBRL(state.dolar);
+  saveState();
+  renderAll();
+}
+
+function updateDolarManual(v) {
+  const val = parseFloat(v);
+  if (!val || val < 1) return;
+  setDolarStatus('manual', 'ti-pencil', 'Cotação manual');
+  updateDolar(val);
+}
+
+function setDolarStatus(type, icon, msg) {
+  const el = document.getElementById('dolar-status');
+  el.className = 'dolar-status ' + type;
+  const spin = type === 'loading' ? ' spinning' : '';
+  el.innerHTML = `<i class="ti ${icon}${spin}"></i> ${msg}`;
+}
+
+async function fetchDolar() {
+  setDolarStatus('loading', 'ti-refresh', 'Buscando cotação...');
+  const CACHE_KEY = 'mb-dolar-cache';
+  const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+
+  // Verifica cache
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
+      applyDolar(cached.rate, cached.ts, true);
+      return;
+    }
+  } catch(e) {}
+
+  // Tenta Frankfurter (sem API key)
+  try {
+    const res = await fetch('https://api.frankfurter.dev/v2/rates?base=USD&quotes=BRL');
+    if (res.ok) {
+      const data = await res.json();
+      const rate = data.rates?.BRL;
+      if (rate && rate > 1) {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ rate, ts: Date.now() }));
+        applyDolar(rate, Date.now(), false);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: ExchangeRate-API (sem API key)
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (res.ok) {
+      const data = await res.json();
+      const rate = data.rates?.BRL;
+      if (rate && rate > 1) {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ rate, ts: Date.now() }));
+        applyDolar(rate, Date.now(), false);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback final: usa valor salvo ou padrão
+  const fallback = state.dolar || 5.80;
+  setDolarStatus('err', 'ti-wifi-off', 'Sem conexão — usando último valor');
+  updateDolar(fallback);
+}
+
+function applyDolar(rate, ts, fromCache) {
+  const now = new Date(ts);
+  const hora = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  const label = fromCache ? `Cache ${hora}` : `Atualizado ${hora}`;
+  setDolarStatus('ok', 'ti-circle-check', label);
+  document.getElementById('dolar-rate').value = rate.toFixed(4);
+  updateDolar(rate);
+}
+
+// Atualiza a cotação a cada 1 hora
+function scheduleDolarRefresh() {
+  fetchDolar();
+  setInterval(fetchDolar, 60 * 60 * 1000);
+}
+
+// ============ CLIENTES ============
+function clearClienteForm() {
+  ['cliente-nome','cliente-valor','cliente-data'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cliente-freq').value = 'mensal';
+  document.getElementById('cliente-status').value = 'ativo';
+  document.getElementById('modal-cliente-title').textContent = 'Novo Cliente';
+}
+
+function editCliente(id) {
+  const c = state.clientes.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('edit-cliente-id').value = id;
+  document.getElementById('cliente-nome').value = c.nome;
+  document.getElementById('cliente-valor').value = c.valor;
+  document.getElementById('cliente-freq').value = c.freq;
+  document.getElementById('cliente-data').value = c.data;
+  document.getElementById('cliente-status').value = c.status;
+  document.getElementById('modal-cliente-title').textContent = 'Editar Cliente';
+  openModal('modal-cliente');
+}
+
+function saveCliente() {
+  const nome = document.getElementById('cliente-nome').value.trim();
+  const valor = parseFloat(document.getElementById('cliente-valor').value);
+  if (!nome || isNaN(valor)) { alert('Preencha nome e valor'); return; }
+  const editId = parseInt(document.getElementById('edit-cliente-id').value);
+  const obj = {
+    nome, valor,
+    freq: document.getElementById('cliente-freq').value,
+    data: document.getElementById('cliente-data').value,
+    status: document.getElementById('cliente-status').value
+  };
+  if (editId) {
+    const idx = state.clientes.findIndex(x => x.id === editId);
+    state.clientes[idx] = { ...state.clientes[idx], ...obj };
+  } else {
+    obj.id = ++nextId.clientes;
+    state.clientes.push(obj);
+  }
+  saveState();
+  closeModal('modal-cliente');
+  renderAll();
+}
+
+function deleteCliente(id) {
+  if (!confirm('Remover este cliente?')) return;
+  state.clientes = state.clientes.filter(x => x.id !== id);
+  saveState();
+  renderAll();
+}
+
+// ============ FUNCIONARIOS ============
+function clearFuncForm() {
+  ['func-nome','func-cargo','func-salario'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('func-encargos').value = '30';
+  document.getElementById('modal-func-title').textContent = 'Novo Colaborador';
+}
+
+function editFuncionario(id) {
+  const f = state.funcionarios.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('edit-func-id').value = id;
+  document.getElementById('func-nome').value = f.nome;
+  document.getElementById('func-cargo').value = f.cargo;
+  document.getElementById('func-salario').value = f.salario;
+  document.getElementById('func-encargos').value = f.encargos;
+  document.getElementById('modal-func-title').textContent = 'Editar Colaborador';
+  openModal('modal-funcionario');
+}
+
+function saveFuncionario() {
+  const nome = document.getElementById('func-nome').value.trim();
+  const salario = parseFloat(document.getElementById('func-salario').value);
+  if (!nome || isNaN(salario)) { alert('Preencha nome e salário'); return; }
+  const editId = parseInt(document.getElementById('edit-func-id').value);
+  const obj = {
+    nome, salario,
+    cargo: document.getElementById('func-cargo').value.trim(),
+    encargos: parseFloat(document.getElementById('func-encargos').value) || 0
+  };
+  if (editId) {
+    const idx = state.funcionarios.findIndex(x => x.id === editId);
+    state.funcionarios[idx] = { ...state.funcionarios[idx], ...obj };
+  } else {
+    obj.id = ++nextId.funcionarios;
+    state.funcionarios.push(obj);
+  }
+  saveState();
+  closeModal('modal-funcionario');
+  renderAll();
+}
+
+function deleteFuncionario(id) {
+  if (!confirm('Remover este colaborador?')) return;
+  state.funcionarios = state.funcionarios.filter(x => x.id !== id);
+  saveState();
+  renderAll();
+}
+
+// ============ DESPESAS ============
+function clearDespForm() {
+  ['desp-nome','desp-valor'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('desp-categoria').value = 'software';
+  document.getElementById('desp-periodo').value = 'mensal';
+  document.getElementById('modal-desp-title').textContent = 'Nova Despesa';
+}
+
+function editDespesa(id) {
+  const d = state.despesas.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('edit-desp-id').value = id;
+  document.getElementById('desp-nome').value = d.nome;
+  document.getElementById('desp-valor').value = d.valor;
+  document.getElementById('desp-categoria').value = d.categoria;
+  document.getElementById('desp-periodo').value = d.periodo;
+  document.getElementById('modal-desp-title').textContent = 'Editar Despesa';
+  openModal('modal-despesa');
+}
+
+function saveDespesa() {
+  const nome = document.getElementById('desp-nome').value.trim();
+  const valor = parseFloat(document.getElementById('desp-valor').value);
+  if (!nome || isNaN(valor)) { alert('Preencha descrição e valor'); return; }
+  const editId = parseInt(document.getElementById('edit-desp-id').value);
+  const obj = {
+    nome, valor,
+    categoria: document.getElementById('desp-categoria').value,
+    periodo: document.getElementById('desp-periodo').value
+  };
+  if (editId) {
+    const idx = state.despesas.findIndex(x => x.id === editId);
+    state.despesas[idx] = { ...state.despesas[idx], ...obj };
+  } else {
+    obj.id = ++nextId.despesas;
+    state.despesas.push(obj);
+  }
+  saveState();
+  closeModal('modal-despesa');
+  renderAll();
+}
+
+function deleteDespesa(id) {
+  if (!confirm('Remover esta despesa?')) return;
+  state.despesas = state.despesas.filter(x => x.id !== id);
+  saveState();
+  renderAll();
+}
+
+// ============ RENDER ============
+let chartReceita, chartCustos;
+
+function renderAll() {
+  renderDashboard();
+  renderClientes();
+  renderFolha();
+  renderDespesas();
+  renderDistribuicao();
+}
+
+function renderDashboard() {
+  const fat = calcFaturamentoMensal();
+  const folha = calcFolhaMensal();
+  const desp = calcDespesasMensal();
+  const lucro = fat - folha - desp;
+  const margin = fat > 0 ? (lucro / fat * 100) : 0;
+
+  const now = new Date();
+  document.getElementById('dash-date').textContent =
+    now.toLocaleDateString('pt-BR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric highlight">
+      <div class="metric-label">Faturamento Mensal</div>
+      <div class="metric-value">${fmtBRL(fat)}</div>
+      <div class="metric-sub">${fmtUSD(fat / state.dolar)} · ${state.clientes.filter(c=>c.status==='ativo').length} clientes ativos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Custo Total</div>
+      <div class="metric-value">${fmtBRL(folha + desp)}</div>
+      <div class="metric-sub">Folha ${fmtBRL(folha)} + Despesas ${fmtBRL(desp)}</div>
+    </div>
+    <div class="metric ${lucro >= 0 ? '' : ''}">
+      <div class="metric-label">Lucro Líquido</div>
+      <div class="metric-value" style="color:${lucro >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtBRL(lucro)}</div>
+      <div class="metric-sub">Margem ${fmt(margin)}%</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Dólar Atual</div>
+      <div class="metric-value" style="font-size:22px; color: var(--gold2)">R$ ${fmt(state.dolar)}</div>
+      <div class="metric-sub">Cotação automática <span style="color:var(--green)">●</span></div>
+    </div>
+  `;
+
+  // Chart Receita
+  const ativos = state.clientes.filter(c => c.status === 'ativo');
+  if (chartReceita) chartReceita.destroy();
+  const ctxR = document.getElementById('chartReceita').getContext('2d');
+  const colors = ['#c9a84c','#4caf8a','#5a9ee0','#9b72e0','#e05a5a','#f0c96b','#5dcaa5'];
+  chartReceita = new Chart(ctxR, {
+    type: 'bar',
+    data: {
+      labels: ativos.map(c => c.nome.length > 14 ? c.nome.substring(0,14)+'…' : c.nome),
+      datasets: [{
+        label: 'Receita Mensal (R$)',
+        data: ativos.map(c => +(c.valor * freqMultiplier(c.freq) * state.dolar).toFixed(2)),
+        backgroundColor: ativos.map((_, i) => colors[i % colors.length] + '99'),
+        borderColor: ativos.map((_, i) => colors[i % colors.length]),
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa8', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa8', font: { size: 11 }, callback: v => 'R$' + v.toLocaleString('pt-BR') } }
+      }
+    }
+  });
+
+  // Chart Custos (donut)
+  if (chartCustos) chartCustos.destroy();
+  const ctxC = document.getElementById('chartCustos').getContext('2d');
+  const despTotal = state.despesas.reduce((s,d) => s + d.valor * freqMultiplier(d.periodo) * state.dolar, 0);
+  const cats = {};
+  state.despesas.forEach(d => {
+    cats[d.categoria] = (cats[d.categoria] || 0) + d.valor * freqMultiplier(d.periodo) * state.dolar;
+  });
+  const despLabels = Object.keys(cats).map(catLabel);
+  const despVals = Object.values(cats);
+  chartCustos = new Chart(ctxC, {
+    type: 'doughnut',
+    data: {
+      labels: ['Folha de Pgto', ...despLabels],
+      datasets: [{
+        data: [folha, ...despVals],
+        backgroundColor: ['#c9a84c99','#4caf8a99','#5a9ee099','#9b72e099','#e05a5a99','#f0c96b99'],
+        borderColor: ['#c9a84c','#4caf8a','#5a9ee0','#9b72e0','#e05a5a','#f0c96b'],
+        borderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8b8fa8', font: { size: 11 }, padding: 12, boxWidth: 12 } }
+      },
+      cutout: '65%'
+    }
+  });
+
+  // Tabela clientes no dash
+  const rows = ativos.map(c => `
+    <tr>
+      <td><span class="dot dot-green"></span>${c.nome}</td>
+      <td>${fmtUSD(c.valor)}</td>
+      <td><span class="freq ${freqClass(c.freq)}">${freqLabel(c.freq)}</span></td>
+      <td>${fmtBRL(c.valor * freqMultiplier(c.freq) * state.dolar)}</td>
+      <td>${c.data ? new Date(c.data+'T12:00').toLocaleDateString('pt-BR') : '—'}</td>
+    </tr>
+  `).join('');
+  document.getElementById('dash-clientes-table').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Valor USD</th><th>Frequência</th><th>Equiv. Mensal</th><th>Próx. Pgto</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" class="empty-state">Nenhum cliente ativo</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderClientes() {
+  const fat = state.clientes.filter(c => c.status==='ativo').reduce((s,c) => s + c.valor * freqMultiplier(c.freq) * state.dolar, 0);
+  const fatUSD = state.clientes.filter(c => c.status==='ativo').reduce((s,c) => s + c.valor * freqMultiplier(c.freq), 0);
+  document.getElementById('clientes-metrics').innerHTML = `
+    <div class="metric highlight"><div class="metric-label">Faturamento Mensal</div><div class="metric-value">${fmtBRL(fat)}</div></div>
+    <div class="metric"><div class="metric-label">Em Dólar</div><div class="metric-value">${fmtUSD(fatUSD)}</div></div>
+    <div class="metric"><div class="metric-label">Clientes Ativos</div><div class="metric-value">${state.clientes.filter(c=>c.status==='ativo').length}</div></div>
+    <div class="metric"><div class="metric-label">Clientes Inativos</div><div class="metric-value">${state.clientes.filter(c=>c.status==='inativo').length}</div></div>
+  `;
+
+  let totalUSD = 0, totalBRL = 0, totalMens = 0;
+  const rows = state.clientes.map(c => {
+    const brl = c.valor * state.dolar;
+    const mens = c.valor * freqMultiplier(c.freq) * state.dolar;
+    if (c.status === 'ativo') { totalUSD += c.valor * freqMultiplier(c.freq); totalBRL += brl; totalMens += mens; }
+    return `
+      <tr>
+        <td><span class="dot ${c.status==='ativo'?'dot-green':'dot-red'}"></span>${c.nome}</td>
+        <td style="font-family:var(--font-mono)">${fmtUSD(c.valor)}</td>
+        <td style="font-family:var(--font-mono)">${fmtBRL(brl)}</td>
+        <td><span class="freq ${freqClass(c.freq)}">${freqLabel(c.freq)}</span></td>
+        <td style="font-family:var(--font-mono); color:var(--gold2)">${fmtBRL(mens)}</td>
+        <td>${c.data ? new Date(c.data+'T12:00').toLocaleDateString('pt-BR') : '—'}</td>
+        <td><span class="freq ${c.status==='ativo'?'freq-mensal':'freq-trimestral'}">${c.status==='ativo'?'Ativo':'Inativo'}</span></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="editCliente(${c.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCliente(${c.id})"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('clientes-tbody').innerHTML = rows || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-users"></i>Nenhum cliente cadastrado</div></td></tr>`;
+  document.getElementById('clientes-tfoot').innerHTML = `
+    <tr class="total-row">
+      <td>TOTAL ATIVOS</td>
+      <td>${fmtUSD(totalUSD)}/mês</td>
+      <td>—</td><td>—</td>
+      <td>${fmtBRL(totalMens)}/mês</td>
+      <td colspan="3"></td>
+    </tr>
+  `;
+}
+
+function renderFolha() {
+  const total = state.funcionarios.reduce((s,f) => s + f.salario * (1 + f.encargos/100), 0);
+  const totalSal = state.funcionarios.reduce((s,f) => s + f.salario, 0);
+  document.getElementById('folha-metrics').innerHTML = `
+    <div class="metric highlight"><div class="metric-label">Total Folha (c/ encargos)</div><div class="metric-value">${fmtBRL(total)}</div></div>
+    <div class="metric"><div class="metric-label">Total Salários Brutos</div><div class="metric-value">${fmtBRL(totalSal)}</div></div>
+    <div class="metric"><div class="metric-label">Colaboradores</div><div class="metric-value">${state.funcionarios.length}</div></div>
+  `;
+
+  let tSal = 0, tEnc = 0, tTot = 0;
+  const rows = state.funcionarios.map(f => {
+    const enc = f.salario * f.encargos / 100;
+    const tot = f.salario + enc;
+    tSal += f.salario; tEnc += enc; tTot += tot;
+    return `
+      <tr>
+        <td>${f.nome}</td>
+        <td style="color:var(--text2)">${f.cargo || '—'}</td>
+        <td style="font-family:var(--font-mono)">${fmtBRL(f.salario)}</td>
+        <td style="font-family:var(--font-mono); color:var(--text2)">${fmtBRL(enc)} <span style="font-size:11px;color:var(--text3)">(${fmt(f.encargos)}%)</span></td>
+        <td style="font-family:var(--font-mono); color:var(--gold2); font-weight:600">${fmtBRL(tot)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="editFuncionario(${f.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFuncionario(${f.id})"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('folha-tbody').innerHTML = rows || `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-id-badge"></i>Nenhum colaborador cadastrado</div></td></tr>`;
+  document.getElementById('folha-tfoot').innerHTML = `
+    <tr class="total-row">
+      <td colspan="2">TOTAL MENSAL</td>
+      <td>${fmtBRL(tSal)}</td>
+      <td>${fmtBRL(tEnc)}</td>
+      <td>${fmtBRL(tTot)}</td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function renderDespesas() {
+  const totalUSD = state.despesas.reduce((s,d) => s + d.valor * freqMultiplier(d.periodo), 0);
+  const totalBRL = totalUSD * state.dolar;
+  document.getElementById('despesas-metrics').innerHTML = `
+    <div class="metric highlight"><div class="metric-label">Total Mensal (R$)</div><div class="metric-value">${fmtBRL(totalBRL)}</div></div>
+    <div class="metric"><div class="metric-label">Total Mensal (USD)</div><div class="metric-value">${fmtUSD(totalUSD)}</div></div>
+    <div class="metric"><div class="metric-label">Itens Cadastrados</div><div class="metric-value">${state.despesas.length}</div></div>
+  `;
+
+  let tUSD = 0, tBRL = 0, tMens = 0;
+  const rows = state.despesas.map(d => {
+    const brl = d.valor * state.dolar;
+    const mens = d.valor * freqMultiplier(d.periodo) * state.dolar;
+    tUSD += d.valor; tMens += mens;
+    return `
+      <tr>
+        <td>${d.nome}</td>
+        <td><span class="badge-blue metric-badge">${catLabel(d.categoria)}</span></td>
+        <td style="font-family:var(--font-mono)">${fmtUSD(d.valor)}</td>
+        <td style="font-family:var(--font-mono)">${fmtBRL(brl)}</td>
+        <td><span class="freq ${freqClass(d.periodo)}">${freqLabel(d.periodo)}</span></td>
+        <td style="font-family:var(--font-mono); color:var(--gold2)">${fmtBRL(mens)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="editDespesa(${d.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDespesa(${d.id})"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('despesas-tbody').innerHTML = rows || `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-receipt"></i>Nenhuma despesa cadastrada</div></td></tr>`;
+  document.getElementById('despesas-tfoot').innerHTML = `
+    <tr class="total-row">
+      <td colspan="2">TOTAL MENSAL</td>
+      <td>${fmtUSD(tUSD)} (bruto)</td>
+      <td>—</td><td>—</td>
+      <td>${fmtBRL(tMens)}</td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function renderDistribuicao() {
+  const fat = calcFaturamentoMensal();
+  const folha = calcFolhaMensal();
+  const desp = calcDespesasMensal();
+  const lucro = fat - folha - desp;
+  const cota = lucro / 2;
+  const margin = fat > 0 ? (lucro / fat * 100) : 0;
+  const lucroUSD = lucro / state.dolar;
+
+  document.getElementById('dist-metrics').innerHTML = `
+    <div class="metric highlight"><div class="metric-label">Faturamento</div><div class="metric-value">${fmtBRL(fat)}</div></div>
+    <div class="metric"><div class="metric-label">Custos Totais</div><div class="metric-value">${fmtBRL(folha + desp)}</div></div>
+    <div class="metric"><div class="metric-label">Lucro Líquido</div><div class="metric-value" style="color:${lucro>=0?'var(--green)':'var(--red)'}">${fmtBRL(lucro)}</div></div>
+    <div class="metric"><div class="metric-label">Margem Líquida</div><div class="metric-value" style="color:${margin>=0?'var(--green)':'var(--red)'}; font-size:22px">${fmt(margin)}%</div></div>
+  `;
+
+  document.getElementById('murillo-value').textContent = fmtBRL(cota);
+  document.getElementById('murillo-usd').textContent = fmtUSD(cota / state.dolar);
+  document.getElementById('leonardo-value').textContent = fmtBRL(cota);
+  document.getElementById('leonardo-usd').textContent = fmtUSD(cota / state.dolar);
+
+  const despMensal = state.despesas.reduce((s,d) => s + d.valor * freqMultiplier(d.periodo) * state.dolar, 0);
+  const rows = [
+    ['(+) Receita Bruta', fat, true],
+    ['(-) Folha de Pagamento', -folha, false],
+    ['(-) Despesas Gerais', -desp, false],
+    ['(=) LUCRO LÍQUIDO', lucro, null],
+    ['— Murillo (50%)', cota, null],
+    ['— Leonardo (50%)', cota, null],
+  ].map(([label, val, pos]) => {
+    const color = pos === null ? (val >= 0 ? 'var(--green)' : 'var(--red)') : (pos ? 'var(--text)' : 'var(--red)');
+    const bold = pos === null ? 'font-weight:600;' : '';
+    const bg = pos === null ? 'background: rgba(255,255,255,0.03);' : '';
+    return `<tr style="${bg}">
+      <td style="${bold} color: var(--text2)">${label}</td>
+      <td style="font-family:var(--font-mono); ${bold} color:${color}; text-align:right">${fmtBRL(Math.abs(val))}</td>
+      <td style="font-family:var(--font-mono); color:var(--text3); text-align:right; font-size:12px">${fmtUSD(Math.abs(val / state.dolar))}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dre-table').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Descrição</th><th style="text-align:right">Valor (R$)</th><th style="text-align:right">Valor (USD)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ============ INIT ============
+if (checkSession()) {
+  loadState();
+}
+// Se não tem sessão, a tela de login já está visível
+</script>
+</body>
+</html>
