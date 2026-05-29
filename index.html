@@ -393,6 +393,7 @@ body.light ::-webkit-scrollbar-thumb{background:rgba(0,0,40,0.22);}
     <div class="nav-item" onclick="showView('ads')"><i class="ti ti-speakerphone"></i><span>ADS</span></div>
     <div class="nav-sec">Resultado</div>
     <div class="nav-item" onclick="showView('distribuicao')"><i class="ti ti-chart-donut"></i><span>Distribuicao</span></div>
+    <div class="nav-item" onclick="showView('caixa-real')"><i class="ti ti-safe"></i><span>Caixa Real</span></div>
     <div class="nav-sec">Conta</div>
     <div class="nav-item" onclick="showView('perfil')"><i class="ti ti-user-circle"></i><span>Meu Perfil</span></div>
   </nav>
@@ -555,6 +556,49 @@ body.light ::-webkit-scrollbar-thumb{background:rgba(0,0,40,0.22);}
   <div class="card">
     <div class="card-hdr"><div class="card-title">DRE - Demonstrativo</div></div>
     <div id="dre-content"></div>
+  </div>
+</div>
+
+<div class="view" id="view-caixa-real">
+  <div class="page-hdr">
+    <div><div class="page-title">Caixa Real</div><div class="page-sub">Saldo realizado, retiradas e reembolsos</div></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="openModal('modal-reembolso')"><i class="ti ti-notes"></i> Observacao</button>
+      <button class="btn btn-primary" onclick="openModal('modal-retirada')"><i class="ti ti-plus"></i> Nova Retirada</button>
+    </div>
+  </div>
+
+  <!-- SALDO CARDS -->
+  <div class="metrics-grid" id="caixareal-metrics"></div>
+
+  <!-- PENDING REEMBOLSOS BANNER -->
+  <div id="reembolsos-pendentes-banner"></div>
+
+  <div class="grid-2">
+    <!-- RETIRADAS -->
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">Retiradas dos Socios</div><div class="card-sub">Historico de saques</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-retirada')"><i class="ti ti-plus"></i> Nova</button>
+      </div>
+      <div id="retiradas-list"></div>
+    </div>
+
+    <!-- DESPESAS PAGAS -->
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">Despesas Pagas</div><div class="card-sub">Marque quando efetuar o pagamento</div></div>
+      </div>
+      <div id="despesas-pagas-list"></div>
+    </div>
+  </div>
+
+  <!-- OBSERVACOES / REEMBOLSOS -->
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">Observacoes e Reembolsos</div><div class="card-sub">Socios que pagaram algo pela empresa e devem ser ressarcidos</div></div>
+    </div>
+    <div id="reembolsos-list"></div>
   </div>
 </div>
 
@@ -764,6 +808,95 @@ body.light ::-webkit-scrollbar-thumb{background:rgba(0,0,40,0.22);}
     </div>
   </div>
 </div>
+<!-- MODAL RETIRADA -->
+<div class="modal-overlay" id="modal-retirada">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-ret-title">Nova Retirada</div>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="closeModal('modal-retirada')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-ret-id">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Socio *</label>
+        <select class="form-control" id="ret-socio">
+          <option value="murillo">Murillo</option>
+          <option value="leonardo">Leonardo</option>
+          <option value="ambos">Ambos (50/50)</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Data *</label>
+        <input type="date" class="form-control" id="ret-data">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Valor USD *</label>
+        <input type="number" class="form-control" id="ret-valor" min="0" step="0.01" placeholder="Ex: 500">
+      </div>
+      <div class="form-group"><label class="form-label">Tipo</label>
+        <select class="form-control" id="ret-tipo">
+          <option value="pro-labore">Pro-labore (dia 15 ou 30)</option>
+          <option value="adiantamento">Adiantamento</option>
+          <option value="lucro">Distribuicao de Lucro</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Observacao</label>
+      <input type="text" class="form-control" id="ret-obs" placeholder="Opcional">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-retirada')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRetirada()"><i class="ti ti-check"></i> Registrar Retirada</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REEMBOLSO / OBSERVACAO -->
+<div class="modal-overlay" id="modal-reembolso">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-reemb-title">Nova Observacao</div>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="closeModal('modal-reembolso')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-reemb-id">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Quem Pagou *</label>
+        <select class="form-control" id="reemb-socio">
+          <option value="murillo">Murillo</option>
+          <option value="leonardo">Leonardo</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Data *</label>
+        <input type="date" class="form-control" id="reemb-data">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Descricao *</label>
+      <input type="text" class="form-control" id="reemb-desc" placeholder="Ex: Pagou hospedagem do servidor">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Valor USD *</label>
+        <input type="number" class="form-control" id="reemb-valor" min="0" step="0.01" placeholder="Ex: 50">
+      </div>
+      <div class="form-group"><label class="form-label">Categoria</label>
+        <select class="form-control" id="reemb-cat">
+          <option value="ferramenta">Ferramenta / Software</option>
+          <option value="infraestrutura">Infraestrutura</option>
+          <option value="marketing">Marketing</option>
+          <option value="operacional">Operacional</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Observacao Adicional</label>
+      <textarea class="form-control" id="reemb-obs" rows="2" placeholder="Detalhes adicionais..." style="resize:vertical;min-height:60px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reembolso')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveReembolso()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== LOGIN =====
 var USUARIOS = {
@@ -856,9 +989,17 @@ async function supaInit(data) {
 }
 
 // ===== STATE =====
-var DEFAULT_STATE = { dolar: 5.80, clientes: [], funcionarios: [], despesas: [], ads: [], pagamentos: {} };
+var DEFAULT_STATE = { dolar: 5.80, clientes: [], funcionarios: [], despesas: [], ads: [], pagamentos: {}, retiradas: [], reembolsos: [], despesas_pagas: {} };
 var state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-var nextId = { clientes: 100, funcionarios: 100, despesas: 100, ads: 100 };
+var nextId = { clientes: 100, funcionarios: 100, despesas: 100, ads: 100, retiradas: 100, reembolsos: 100 };
+
+function initStateArrays() {
+  if (!state.pagamentos) state.pagamentos = {};
+  if (!state.ads) state.ads = [];
+  if (!state.retiradas) state.retiradas = [];
+  if (!state.reembolsos) state.reembolsos = [];
+  if (!state.despesas_pagas) state.despesas_pagas = {};
+}
 
 function setSyncStatus(type, msg) {
   var dot = document.getElementById('sync-dot');
@@ -883,14 +1024,12 @@ async function loadState() {
   var remote = await supaGet();
   if (remote) {
     state = remote;
-    if (!state.pagamentos) state.pagamentos = {};
-    if (!state.ads) state.ads = [];
+    initStateArrays();
     setSyncStatus('ok', 'Online');
   } else {
     var local = JSON.parse(localStorage.getItem('mb-state') || 'null');
     state = local || JSON.parse(JSON.stringify(DEFAULT_STATE));
-    if (!state.pagamentos) state.pagamentos = {};
-    if (!state.ads) state.ads = [];
+    initStateArrays();
     await supaInit(state);
     setSyncStatus('ok', 'Inicializado');
   }
@@ -898,6 +1037,8 @@ async function loadState() {
   if (state.funcionarios && state.funcionarios.length) nextId.funcionarios = Math.max.apply(null, state.funcionarios.map(function(x) { return x.id; }).concat([100])) + 1;
   if (state.despesas && state.despesas.length) nextId.despesas = Math.max.apply(null, state.despesas.map(function(x) { return x.id; }).concat([100])) + 1;
   if (state.ads && state.ads.length) nextId.ads = Math.max.apply(null, state.ads.map(function(x) { return x.id; }).concat([100])) + 1;
+  if (state.retiradas && state.retiradas.length) nextId.retiradas = Math.max.apply(null, state.retiradas.map(function(x) { return x.id; }).concat([100])) + 1;
+  if (state.reembolsos && state.reembolsos.length) nextId.reembolsos = Math.max.apply(null, state.reembolsos.map(function(x) { return x.id; }).concat([100])) + 1;
   renderAll();
   scheduleDolarRefresh();
   if (ov) ov.style.display = 'none';
@@ -907,8 +1048,7 @@ setInterval(async function() {
   var r = await supaGet();
   if (r) {
     state = r;
-    if (!state.pagamentos) state.pagamentos = {};
-    if (!state.ads) state.ads = [];
+    initStateArrays();
     setSyncStatus('ok', 'Atualizado');
     renderAll();
   }
@@ -929,45 +1069,50 @@ function catLabel(c) { var m = { software: 'Software', infraestrutura: 'Infra', 
 function mkKey(year, month) { return year + '-' + String(month + 1).padStart(2, '0'); }
 
 // ===== PAYMENT LOGIC =====
+
+// Gera chave unica para cada parcela individual com data real
 function getExpectedPayments(cli) {
   var result = [];
   if (!cli.entrada || cli.status === 'inativo') return result;
   var entrada = new Date(cli.entrada + 'T12:00');
   var today = new Date();
+  today.setHours(23,59,59,0);
   var freq = cli.freq;
 
   if (freq === 'trimestral') {
+    // A cada 3 meses a partir da entrada
     var d = new Date(entrada);
     while (d <= today) {
-      result.push(mkKey(d.getFullYear(), d.getMonth()));
+      // chave: YYYY-MM-DD da data de vencimento
+      result.push({ key: d.toISOString().split('T')[0], date: new Date(d) });
       d.setMonth(d.getMonth() + 3);
     }
     return result;
   }
 
   if (freq === 'mensal') {
-    var d = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
+    var payDay = cli.payDay1 || entrada.getDate();
+    var d = new Date(entrada.getFullYear(), entrada.getMonth(), payDay);
+    if (d < entrada) d.setMonth(d.getMonth() + 1); // se ja passou no mes de entrada
     while (d <= today) {
-      var payDay = cli.payDay1 || entrada.getDate();
-      var payDate = new Date(d.getFullYear(), d.getMonth(), payDay);
-      if (payDate >= entrada && payDate <= today) {
-        result.push(mkKey(d.getFullYear(), d.getMonth()));
-      }
+      result.push({ key: d.toISOString().split('T')[0], date: new Date(d) });
       d.setMonth(d.getMonth() + 1);
     }
     return result;
   }
 
   if (freq === 'quinzenal') {
+    var day1 = cli.payDay1 || 15;
+    var day2 = cli.payDay2 || 30;
     var d = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
     while (d <= today) {
-      var key = mkKey(d.getFullYear(), d.getMonth());
-      var day1 = cli.payDay1 || 15;
-      var day2 = cli.payDay2 || 30;
-      var date1 = new Date(d.getFullYear(), d.getMonth(), day1);
-      var date2 = new Date(d.getFullYear(), d.getMonth(), day2);
-      if (date1 >= entrada && date1 <= today) result.push(key + '-A');
-      if (date2 >= entrada && date2 <= today) result.push(key + '-B');
+      var yr = d.getFullYear(), mo = d.getMonth();
+      var date1 = new Date(yr, mo, day1);
+      // dia 30 = ultimo dia do mes se nao existir
+      var lastDay = new Date(yr, mo + 1, 0).getDate();
+      var date2 = new Date(yr, mo, Math.min(day2, lastDay));
+      if (date1 >= entrada && date1 <= today) result.push({ key: date1.toISOString().split('T')[0], date: new Date(date1) });
+      if (date2 >= entrada && date2 <= today) result.push({ key: date2.toISOString().split('T')[0], date: new Date(date2) });
       d.setMonth(d.getMonth() + 1);
     }
     return result;
@@ -975,12 +1120,9 @@ function getExpectedPayments(cli) {
 
   if (freq === 'semanal') {
     var d = new Date(entrada);
-    var w = 0;
     while (d <= today) {
-      var key = mkKey(d.getFullYear(), d.getMonth()) + '-W' + w;
-      result.push(key);
+      result.push({ key: d.toISOString().split('T')[0], date: new Date(d) });
       d.setDate(d.getDate() + 7);
-      w++;
     }
     return result;
   }
@@ -995,41 +1137,66 @@ function payValue(cli) {
   return cli.valor;
 }
 
-function isInadimplente(cli) {
-  if (cli.status === 'inativo') return false;
+// Conta parcelas nao pagas consecutivas (do mais recente para tras)
+function countAtrasadas(cli) {
+  if (cli.status === 'inativo') return 0;
   var expected = getExpectedPayments(cli);
-  if (expected.length === 0) return false;
-  if (cli.freq === 'trimestral') {
-    var last = expected[expected.length - 1];
-    var paid = state.pagamentos[cli.id + '-' + last];
-    if (paid) return false;
-    var parts = last.split('-');
-    var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
-    var venc = new Date(y, m + 3, 1);
-    return new Date() > venc;
+  if (!expected.length) return 0;
+  var count = 0;
+  // Conta do mais recente para o mais antigo enquanto nao pago
+  for (var i = expected.length - 1; i >= 0; i--) {
+    var pKey = cli.id + '-' + expected[i].key;
+    if (!state.pagamentos[pKey]) { count++; } else { break; }
   }
-  var last = expected[expected.length - 1];
-  return !state.pagamentos[cli.id + '-' + last];
+  return count;
 }
 
+function isInadimplente(cli) {
+  if (cli.status === 'inativo') return false;
+  if (cli.freq === 'trimestral') {
+    var expected = getExpectedPayments(cli);
+    if (!expected.length) return false;
+    var last = expected[expected.length - 1];
+    if (state.pagamentos[cli.id + '-' + last.key]) return false;
+    // So inadimplente apos 3 meses da data de vencimento
+    var venc = new Date(last.date);
+    venc.setMonth(venc.getMonth() + 3);
+    return new Date() > venc;
+  }
+  return countAtrasadas(cli) >= 2;
+}
+
+// Retorna parcelas de um mes especifico (para caixa e pagamentos)
 function getMonthReceipts(year, month) {
-  var key = mkKey(year, month);
+  var monthKey = mkKey(year, month);
   var total = 0;
   var items = [];
   state.clientes.filter(function(c) { return c.status === 'ativo'; }).forEach(function(cli) {
     var expected = getExpectedPayments(cli);
-    expected.forEach(function(pk) {
-      if (!pk.startsWith(key)) return;
-      var pKey = cli.id + '-' + pk;
+    var entradaDate = cli.entrada ? new Date(cli.entrada + 'T12:00') : null;
+    var entradaMonthKey = entradaDate ? mkKey(entradaDate.getFullYear(), entradaDate.getMonth()) : '';
+    var domainAdded = false;
+
+    expected.forEach(function(ep) {
+      // Verifica se a data desta parcela pertence ao mes/ano solicitado
+      var epDate = new Date(ep.key + 'T12:00');
+      var epMonthKey = mkKey(epDate.getFullYear(), epDate.getMonth());
+      if (epMonthKey !== monthKey) return;
+
+      var pKey = cli.id + '-' + ep.key;
       var paid = !!state.pagamentos[pKey];
       var val = payValue(cli);
-      var entradaDate = cli.entrada ? new Date(cli.entrada + 'T12:00') : null;
-      var entradaKey = entradaDate ? mkKey(entradaDate.getFullYear(), entradaDate.getMonth()) : '';
-      var domainCost = (cli.dominio && entradaKey === key) ? 10.83 : 0;
-      items.push({ cli: cli, pk: pk, pKey: pKey, paid: paid, val: val, domainCost: domainCost });
+      var domainCost = 0;
+      if (cli.dominio && entradaMonthKey === monthKey && !domainAdded) {
+        domainCost = 10.83;
+        domainAdded = true;
+      }
+      items.push({ cli: cli, pk: ep.key, pKey: pKey, paid: paid, val: val, domainCost: domainCost, date: ep.date });
       if (paid) total += val + domainCost;
     });
   });
+  // Ordena por data
+  items.sort(function(a,b) { return a.date - b.date; });
   return { total: total, items: items };
 }
 
@@ -1060,7 +1227,17 @@ function changePgtoMonth(d) {
 }
 
 // ===== MODALS =====
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  // Pre-fill today's date for new entries
+  var today = new Date().toISOString().split('T')[0];
+  if (id === 'modal-retirada' && !document.getElementById('edit-ret-id').value) {
+    document.getElementById('ret-data').value = today;
+  }
+  if (id === 'modal-reembolso' && !document.getElementById('edit-reemb-id').value) {
+    document.getElementById('reemb-data').value = today;
+  }
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   if (id === 'modal-cliente') {
@@ -1091,6 +1268,22 @@ function closeModal(id) {
     var now = new Date();
     document.getElementById('ads-mes').value = now.getMonth();
     document.getElementById('ads-ano').value = now.getFullYear();
+  }
+  if (id === 'modal-retirada') {
+    document.getElementById('edit-ret-id').value = '';
+    ['ret-valor','ret-obs'].forEach(function(x) { document.getElementById(x).value = ''; });
+    document.getElementById('ret-socio').value = 'murillo';
+    document.getElementById('ret-tipo').value = 'pro-labore';
+    document.getElementById('ret-data').value = '';
+    document.getElementById('modal-ret-title').textContent = 'Nova Retirada';
+  }
+  if (id === 'modal-reembolso') {
+    document.getElementById('edit-reemb-id').value = '';
+    ['reemb-desc','reemb-valor','reemb-obs'].forEach(function(x) { document.getElementById(x).value = ''; });
+    document.getElementById('reemb-socio').value = 'murillo';
+    document.getElementById('reemb-cat').value = 'ferramenta';
+    document.getElementById('reemb-data').value = '';
+    document.getElementById('modal-reemb-title').textContent = 'Nova Observacao';
   }
 }
 document.querySelectorAll('.modal-overlay').forEach(function(m) {
@@ -1196,7 +1389,7 @@ function calcReceitaMensalUSD() { return state.clientes.filter(function(c) { ret
 
 // ===== RENDER =====
 var chartAnual, chartR, chartC;
-function renderAll() { renderCaixa(); renderDashboard(); renderClientes(); renderPagamentos(); renderFolha(); renderDespesas(); renderAds(); renderDistribuicao(); }
+function renderAll() { renderCaixa(); renderDashboard(); renderClientes(); renderPagamentos(); renderFolha(); renderDespesas(); renderAds(); renderDistribuicao(); renderCaixaReal(); }
 
 function renderCaixa() {
   document.getElementById('caixa-year-label').textContent = currentCaixaYear;
@@ -1225,9 +1418,19 @@ function renderCaixa() {
     '<div class="metric"><div class="metric-lbl">Margem</div><div class="metric-val" style="color:' + (margin >= 0 ? 'var(--green)' : 'var(--red)') + ';font-size:20px">' + fmt(margin) + '%</div></div>';
 
   var recRows = items.length ? items.map(function(it) {
-    var domStr = it.domainCost > 0 ? ' <span style="font-size:10px;color:var(--yellow)">+$10.83 dominio</span>' : '';
+    var domStr = it.domainCost > 0 ? ' <span style="font-size:10px;color:var(--yellow)">+$10.83 dom.</span>' : '';
+    var dateFmt = it.date ? it.date.toLocaleDateString('pt-BR') : '';
+    var atrasadas = countAtrasadas(it.cli);
+    var atrasoStr = '';
+    if (!it.paid && atrasadas >= 2) {
+      atrasoStr = ' <span style="font-size:10px;color:var(--red);font-weight:700">' + atrasadas + 'x atraso</span>';
+    }
     return '<div class="pay-check' + (it.paid ? ' paid' : '') + '"><input type="checkbox"' + (it.paid ? ' checked' : '') + ' onchange="togglePagamento(' + it.cli.id + ',\'' + it.pk + '\')">' +
-      '<span class="pay-check-label">' + it.cli.nome + domStr + '</span>' +
+      '<span class="pay-check-label">' +
+        '<strong style="color:var(--text)">' + it.cli.nome + '</strong>' +
+        '<span style="font-size:10px;color:var(--text3);margin-left:6px">' + dateFmt + '</span>' +
+        domStr + atrasoStr +
+      '</span>' +
       '<span class="pay-check-val">' + fmtUSD(it.val + it.domainCost) + '</span></div>';
   }).join('') : '<div class="empty"><i class="ti ti-cash"></i><p>Nenhum pagamento esperado</p></div>';
   document.getElementById('caixa-receitas').innerHTML = recRows;
@@ -1537,6 +1740,266 @@ function loadSenhasLocais() {
   Object.keys(senhas).forEach(function(u) {
     if (USUARIOS[u]) USUARIOS[u].senha = senhas[u];
   });
+}
+
+// ===== CRUD RETIRADAS =====
+function saveRetirada() {
+  var valor = parseFloat(document.getElementById('ret-valor').value);
+  var data = document.getElementById('ret-data').value;
+  if (!valor || !data) { alert('Preencha valor e data'); return; }
+  var editId = parseInt(document.getElementById('edit-ret-id').value);
+  var obj = {
+    valor: valor,
+    data: data,
+    socio: document.getElementById('ret-socio').value,
+    tipo: document.getElementById('ret-tipo').value,
+    obs: document.getElementById('ret-obs').value.trim()
+  };
+  if (editId) {
+    var i = state.retiradas.findIndex(function(x) { return x.id === editId; });
+    state.retiradas[i] = Object.assign({}, state.retiradas[i], obj);
+  } else {
+    obj.id = ++nextId.retiradas;
+    state.retiradas.push(obj);
+  }
+  saveState(); closeModal('modal-retirada'); renderAll();
+}
+
+function editRetirada(id) {
+  var r = state.retiradas.find(function(x) { return x.id === id; }); if (!r) return;
+  document.getElementById('edit-ret-id').value = id;
+  document.getElementById('ret-socio').value = r.socio;
+  document.getElementById('ret-data').value = r.data;
+  document.getElementById('ret-valor').value = r.valor;
+  document.getElementById('ret-tipo').value = r.tipo || 'pro-labore';
+  document.getElementById('ret-obs').value = r.obs || '';
+  document.getElementById('modal-ret-title').textContent = 'Editar Retirada';
+  openModal('modal-retirada');
+}
+
+function deleteRetirada(id) {
+  if (!confirm('Remover esta retirada?')) return;
+  state.retiradas = state.retiradas.filter(function(x) { return x.id !== id; });
+  saveState(); renderAll();
+}
+
+// ===== CRUD REEMBOLSOS =====
+function saveReembolso() {
+  var desc = document.getElementById('reemb-desc').value.trim();
+  var valor = parseFloat(document.getElementById('reemb-valor').value);
+  var data = document.getElementById('reemb-data').value;
+  if (!desc || !valor || !data) { alert('Preencha descricao, valor e data'); return; }
+  var editId = parseInt(document.getElementById('edit-reemb-id').value);
+  var obj = {
+    desc: desc, valor: valor, data: data,
+    socio: document.getElementById('reemb-socio').value,
+    cat: document.getElementById('reemb-cat').value,
+    obs: document.getElementById('reemb-obs').value.trim(),
+    restituido: false
+  };
+  if (editId) {
+    var i = state.reembolsos.findIndex(function(x) { return x.id === editId; });
+    obj.restituido = state.reembolsos[i].restituido;
+    state.reembolsos[i] = Object.assign({}, state.reembolsos[i], obj);
+  } else {
+    obj.id = ++nextId.reembolsos;
+    state.reembolsos.push(obj);
+  }
+  saveState(); closeModal('modal-reembolso'); renderAll();
+}
+
+function editReembolso(id) {
+  var r = state.reembolsos.find(function(x) { return x.id === id; }); if (!r) return;
+  document.getElementById('edit-reemb-id').value = id;
+  document.getElementById('reemb-socio').value = r.socio;
+  document.getElementById('reemb-data').value = r.data;
+  document.getElementById('reemb-desc').value = r.desc;
+  document.getElementById('reemb-valor').value = r.valor;
+  document.getElementById('reemb-cat').value = r.cat || 'outro';
+  document.getElementById('reemb-obs').value = r.obs || '';
+  document.getElementById('modal-reemb-title').textContent = 'Editar Observacao';
+  openModal('modal-reembolso');
+}
+
+function deleteReembolso(id) {
+  if (!confirm('Remover esta observacao?')) return;
+  state.reembolsos = state.reembolsos.filter(function(x) { return x.id !== id; });
+  saveState(); renderAll();
+}
+
+function toggleRestituido(id) {
+  var r = state.reembolsos.find(function(x) { return x.id === id; }); if (!r) return;
+  r.restituido = !r.restituido;
+  saveState(); renderAll();
+}
+
+// ===== DESPESAS PAGAS =====
+function toggleDespesaPaga(despId, key) {
+  if (state.despesas_pagas[key]) { delete state.despesas_pagas[key]; }
+  else { state.despesas_pagas[key] = { ts: Date.now(), by: usuarioAtual }; }
+  saveState(); renderAll();
+}
+
+// ===== CALCS CAIXA REAL =====
+function calcSaldoRealizado() {
+  // Receitas confirmadas — soma todos pagamentos marcados
+  var receitas = 0;
+  state.clientes.forEach(function(cli) {
+    var expected = getExpectedPayments(cli);
+    var entradaDate = cli.entrada ? new Date(cli.entrada + 'T12:00') : null;
+    var entradaMonthKey = entradaDate ? mkKey(entradaDate.getFullYear(), entradaDate.getMonth()) : '';
+    var domainCounted = false;
+    expected.forEach(function(ep) {
+      var pKey = cli.id + '-' + ep.key;
+      if (state.pagamentos[pKey]) {
+        receitas += payValue(cli);
+        if (cli.dominio && !domainCounted) {
+          var epMonthKey = mkKey(new Date(ep.key + 'T12:00').getFullYear(), new Date(ep.key + 'T12:00').getMonth());
+          if (epMonthKey === entradaMonthKey) { receitas += 10.83; domainCounted = true; }
+        }
+      }
+    });
+  });
+
+  // Retiradas
+  var retiradas = state.retiradas.reduce(function(s, r) { return s + r.valor; }, 0);
+
+  // Despesas pagas
+  var despPagas = 0;
+  Object.keys(state.despesas_pagas).forEach(function(k) {
+    var parts = k.split('-');
+    var despId = parseInt(parts[0]);
+    var desp = state.despesas.find(function(d) { return d.id === despId; });
+    if (desp) despPagas += desp.valor * freqMult(desp.periodo);
+  });
+
+  // ADS (considerados pagos quando lançados)
+  var adsPagos = state.ads.reduce(function(s, a) { return s + a.valor; }, 0);
+
+  // Reembolsos restituidos
+  var reembolsosOut = state.reembolsos.filter(function(r) { return r.restituido; }).reduce(function(s, r) { return s + r.valor; }, 0);
+
+  return {
+    receitas: receitas,
+    retiradas: retiradas,
+    despPagas: despPagas,
+    adsPagos: adsPagos,
+    reembolsosOut: reembolsosOut,
+    saldo: receitas - retiradas - despPagas - adsPagos - reembolsosOut
+  };
+}
+
+// ===== RENDER CAIXA REAL =====
+function renderCaixaReal() {
+  var calc = calcSaldoRealizado();
+  var pendReemb = state.reembolsos.filter(function(r) { return !r.restituido; });
+  var pendReembTotal = pendReemb.reduce(function(s, r) { return s + r.valor; }, 0);
+
+  // Metrics
+  document.getElementById('caixareal-metrics').innerHTML =
+    '<div class="metric primary"><div class="metric-lbl">Saldo Disponivel</div><div class="metric-val" style="color:' + (calc.saldo >= 0 ? 'var(--green)' : 'var(--red)') + '">' + fmtUSD(calc.saldo) + '</div><div class="metric-sub">' + fmtBRL(usd2brl(calc.saldo)) + '</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Total Recebido</div><div class="metric-val">' + fmtUSD(calc.receitas) + '</div><div class="metric-sub">Pagamentos confirmados</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Total Retiradas</div><div class="metric-val" style="color:var(--red)">' + fmtUSD(calc.retiradas) + '</div><div class="metric-sub">' + state.retiradas.length + ' retiradas</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Reembolsos Pendentes</div><div class="metric-val" style="color:var(--yellow)">' + fmtUSD(pendReembTotal) + '</div><div class="metric-sub">' + pendReemb.length + ' pendente(s)</div></div>';
+
+  // Banner pendentes
+  var bannerEl = document.getElementById('reembolsos-pendentes-banner');
+  if (pendReemb.length) {
+    bannerEl.innerHTML = '<div class="inad-banner" style="margin-bottom:18px;"><i class="ti ti-alert-triangle" style="font-size:18px"></i> ' +
+      pendReemb.length + ' reembolso(s) pendente(s) totalizando ' + fmtUSD(pendReembTotal) + ' — verifique abaixo.</div>';
+  } else { bannerEl.innerHTML = ''; }
+
+  // Retiradas list
+  var tipoLabel = { 'pro-labore': 'Pro-labore', 'adiantamento': 'Adiantamento', 'lucro': 'Dist. Lucro', 'outro': 'Outro' };
+  var socioLabel = { murillo: 'Murillo', leonardo: 'Leonardo', ambos: 'Ambos' };
+  var socioColor = { murillo: 'var(--orange3)', leonardo: 'var(--green)', ambos: '#A07EF0' };
+
+  var retList = state.retiradas.slice().sort(function(a, b) { return b.data.localeCompare(a.data); });
+  var retHtml = retList.length ? retList.map(function(r) {
+    var dateFmt = new Date(r.data + 'T12:00').toLocaleDateString('pt-BR');
+    return '<div class="pay-check paid" style="margin-bottom:8px;">' +
+      '<div class="pay-check-label" style="flex:1">' +
+        '<strong style="color:' + socioColor[r.socio] + '">' + socioLabel[r.socio] + '</strong>' +
+        '<span style="color:var(--text3);font-size:10px;margin-left:8px">' + dateFmt + '</span>' +
+        '<span class="badge badge-cat" style="margin-left:8px;font-size:10px">' + (tipoLabel[r.tipo] || r.tipo) + '</span>' +
+        (r.obs ? '<div style="font-size:11px;color:var(--text3);margin-top:3px">' + r.obs + '</div>' : '') +
+      '</div>' +
+      '<span class="pay-check-val" style="color:var(--red)">- ' + fmtUSD(r.valor) + '</span>' +
+      '<div style="margin-left:10px;display:flex;gap:4px">' +
+        '<button class="btn btn-ghost btn-sm btn-icon" onclick="editRetirada(' + r.id + ')"><i class="ti ti-edit"></i></button>' +
+        '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteRetirada(' + r.id + ')"><i class="ti ti-trash"></i></button>' +
+      '</div></div>';
+  }).join('') : '<div class="empty"><i class="ti ti-safe"></i><p>Nenhuma retirada registrada</p></div>';
+
+  // Total retiradas por socio
+  var retMurillo = state.retiradas.filter(function(r) { return r.socio === 'murillo'; }).reduce(function(s,r){return s+r.valor;},0);
+  var retLeonardo = state.retiradas.filter(function(r) { return r.socio === 'leonardo'; }).reduce(function(s,r){return s+r.valor;},0);
+  var retAmbos = state.retiradas.filter(function(r) { return r.socio === 'ambos'; }).reduce(function(s,r){return s+r.valor;},0);
+  if (state.retiradas.length) {
+    retHtml += '<div style="display:flex;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">' +
+      '<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Murillo</div><div style="font-family:var(--mono);color:var(--orange3);font-weight:600">' + fmtUSD(retMurillo + retAmbos/2) + '</div></div>' +
+      '<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Leonardo</div><div style="font-family:var(--mono);color:var(--green);font-weight:600">' + fmtUSD(retLeonardo + retAmbos/2) + '</div></div>' +
+      '</div>';
+  }
+  document.getElementById('retiradas-list').innerHTML = retHtml;
+
+  // Despesas pagas list
+  var now = new Date();
+  var despHtml = '';
+  if (!state.despesas.length) {
+    despHtml = '<div class="empty"><i class="ti ti-receipt-2"></i><p>Nenhuma despesa cadastrada</p></div>';
+  } else {
+    // Show last 3 months of each expense
+    for (var mi = 2; mi >= 0; mi--) {
+      var d = new Date(now.getFullYear(), now.getMonth() - mi, 1);
+      var yr = d.getFullYear(), mo = d.getMonth();
+      var monthKey = mkKey(yr, mo);
+      despHtml += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:10px 0 6px">' + MONTHS[mo] + ' ' + yr + '</div>';
+      state.despesas.forEach(function(desp) {
+        // Only show if this month is relevant for this expense period
+        var shouldShow = false;
+        if (desp.periodo === 'mensal') shouldShow = true;
+        if (desp.periodo === 'trimestral' && mo % 3 === 0) shouldShow = true;
+        if (desp.periodo === 'anual' && mo === 0) shouldShow = true;
+        if (!shouldShow) return;
+        var key = desp.id + '-' + monthKey;
+        var pago = !!state.despesas_pagas[key];
+        despHtml += '<div class="pay-check' + (pago ? ' paid' : '') + '" style="margin-bottom:6px;">' +
+          '<input type="checkbox"' + (pago ? ' checked' : '') + ' onchange="toggleDespesaPaga(' + desp.id + ',\'' + key + '\')">' +
+          '<span class="pay-check-label">' + desp.nome + ' <span style="font-size:10px;color:var(--text3)">(' + catLabel(desp.categoria) + ')</span></span>' +
+          '<span class="pay-check-val">' + fmtUSD(desp.valor) + '</span></div>';
+      });
+    }
+  }
+  document.getElementById('despesas-pagas-list').innerHTML = despHtml;
+
+  // Reembolsos list
+  var reembHtml = state.reembolsos.length ? '' : '<div class="empty"><i class="ti ti-notes"></i><p>Nenhuma observacao registrada</p></div>';
+  var catLabelMap = { ferramenta: 'Ferramenta', infraestrutura: 'Infra', marketing: 'Marketing', operacional: 'Operacional', outro: 'Outro' };
+
+  state.reembolsos.slice().sort(function(a,b) { return b.data.localeCompare(a.data); }).forEach(function(r) {
+    var dateFmt = new Date(r.data + 'T12:00').toLocaleDateString('pt-BR');
+    reembHtml +=
+      '<div class="pay-check' + (r.restituido ? ' paid' : '') + '" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">' +
+        '<input type="checkbox"' + (r.restituido ? ' checked' : '') + ' onchange="toggleRestituido(' + r.id + ')" title="Marcar como restituido">' +
+        '<div style="flex:1;min-width:200px">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<strong style="color:' + socioColor[r.socio] + '">' + socioLabel[r.socio] + '</strong>' +
+            '<span style="color:var(--text);font-size:12px">' + r.desc + '</span>' +
+            '<span class="badge badge-cat" style="font-size:10px">' + (catLabelMap[r.cat] || r.cat) + '</span>' +
+            '<span style="color:var(--text3);font-size:10px">' + dateFmt + '</span>' +
+          '</div>' +
+          (r.obs ? '<div style="font-size:11px;color:var(--text3);margin-top:3px">' + r.obs + '</div>' : '') +
+          (r.restituido ? '<div style="font-size:10px;color:var(--green);margin-top:3px;font-weight:600"><i class="ti ti-circle-check"></i> Restituido</div>' : '<div style="font-size:10px;color:var(--yellow);margin-top:3px;font-weight:600"><i class="ti ti-clock"></i> Pendente restituicao</div>') +
+        '</div>' +
+        '<span class="pay-check-val" style="color:' + (r.restituido ? 'var(--text3)' : 'var(--yellow)') + '">' + fmtUSD(r.valor) + '</span>' +
+        '<div style="display:flex;gap:4px">' +
+          '<button class="btn btn-ghost btn-sm btn-icon" onclick="editReembolso(' + r.id + ')"><i class="ti ti-edit"></i></button>' +
+          '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteReembolso(' + r.id + ')"><i class="ti ti-trash"></i></button>' +
+        '</div>' +
+      '</div>';
+  });
+  document.getElementById('reembolsos-list').innerHTML = reembHtml;
 }
 
 // ===== INIT =====
